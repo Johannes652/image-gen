@@ -28,11 +28,11 @@ The program runs from the command line and requires the file path of the target 
 Navigate to your build directory where the executable was generated and run the program:
 ### Windows
 ```bash
-image-gen.exe "path/to/your/image.jpg"
+image-gen.exe "path/to/your/image.jpg" shape-type
 ```
 ### Linux / macOS:
 ```bash
-./image-gen "path/to/your/image.jpg"
+./image-gen "path/to/your/image.jpg" shape-type
 ```
 ## How it Works
 

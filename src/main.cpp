@@ -4,12 +4,15 @@
 int main(int argc, char* argv[]) {
     sf::Image image;
     std::string imageFilePath;
-    if (argc < 2) {
+    std::string shapeType = "circle";
+
+    if (argc < 3) {
         // default behaviour
         imageFilePath = "resources/source-images/dannebrog.jpg";
     }
     else {
         imageFilePath = argv[1];
+        shapeType = argv[2];
     }
 
     if (!image.loadFromFile(imageFilePath)) {
@@ -18,7 +21,7 @@ int main(int argc, char* argv[]) {
     } 
     else std::cout << "Successfully loaded image!\n";
     
-    ImageGen imageGen(image);
+    ImageGen imageGen(image, shapeType);
     imageGen.Loop();
     return 0;
 }   

@@ -9,8 +9,9 @@
 
 #define FRAMERATE 0
 
-ImageGen::ImageGen(const sf::Image& image) :
+ImageGen::ImageGen(const sf::Image& image, const std::string& shapeType) :
     sourceImage_(image),
+    shapeType_(shapeType),
     sourceImageSize_(image.getSize()),
     windowResolution_(image.getSize())
 {
@@ -50,7 +51,14 @@ void ImageGen::Loop() {
         size_t oldSumOfColorDifferences = CalculateSumOfColorDifferences(baseImage);
 
         // Place random shape
-        DrawRandomCircle(canvas);
+        if (shapeType_ == "rectangle" || shapeType_ == "rect") {
+            DrawRandomRect(canvas);
+        }
+        else {
+            // defaults to circle shapes
+            DrawRandomCircle(canvas);
+        }
+        
         canvas.display();
         
         // Calculate new sum of differences of average colors
@@ -133,6 +141,38 @@ void ImageGen::DrawRandomCircle(sf::RenderTexture& canvas) {
     });
 
     canvas.draw(circle);
+}
+
+void ImageGen::DrawRandomRect(sf::RenderTexture& canvas) {
+    sf::RectangleShape rect;
+    // 1 <= xsize <= windowx
+    // 1 <= ysize <= windowy
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    std::uniform_int_distribution<int> distrib(1, static_cast<int>(windowResolution_.x));
+    float sizex = distrib(gen);
+    distrib = std::uniform_int_distribution<int>{1, static_cast<int>(windowResolution_.y)};
+    float sizey = distrib(gen);
+    rect.setSize({sizex,sizey});
+
+    // -sizex <= posx <= windowx
+    distrib = std::uniform_int_distribution<int>{static_cast<int>(-sizex), static_cast<int>(windowResolution_.x)};
+    float posx = distrib(gen);
+    // -sizey <= posy <= windowy
+    distrib = std::uniform_int_distribution<int>{static_cast<int>(-sizey), static_cast<int>(windowResolution_.y)};
+    float posy = distrib(gen);
+    rect.setPosition({posx,posy});
+
+    // 0 <= col <= 255
+    distrib = std::uniform_int_distribution<int>{0, 255};
+    rect.setFillColor({
+        static_cast<uint8_t>(distrib(gen)),
+        static_cast<uint8_t>(distrib(gen)),
+        static_cast<uint8_t>(distrib(gen)),
+        static_cast<uint8_t>(distrib(gen))
+    });
+
+    canvas.draw(rect);
 }
 
 std::string ImageGen::ColorToString(const sf::Color color) {

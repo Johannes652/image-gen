@@ -6,18 +6,21 @@
 
 class ImageGen {
 public:
-    ImageGen(const sf::Image& image);
+    ImageGen(const sf::Image& image, const std::string& shapeType);
     void Loop();
     
 private:
+    std::string shapeType_;
+
     sf::RenderWindow window_;
     sf::Vector2u windowResolution_;
 
     sf::Image sourceImage_;
     sf::Vector2u sourceImageSize_;
-    
+
     std::string ColorToString(const sf::Color color);
     size_t CalculateSumOfColorDifferences(sf::Image&);
     void DrawRandomCircle(sf::RenderTexture&);
+    void DrawRandomRect(sf::RenderTexture&);
     void SaveEvolvedImage(const sf::Image& image) const;
 };
