@@ -16,8 +16,10 @@ This project is a C++ application that attempts to recreate a target image using
    mkdir build
    cd build
 4. Run CMake to configure the project:
+   ```bash
    cmake ..
-5. Build the executable:
+6. Build the executable:
+   ```bash
    cmake --build .
 
 ## Usage
@@ -25,10 +27,13 @@ This project is a C++ application that attempts to recreate a target image using
 The program runs from the command line and requires the file path of the target image to be passed as an argument.
 Navigate to your build directory where the executable was generated and run the program:
 ### Windows
+```bash
 image-gen.exe "path/to/your/image.jpg"
+```
 ### Linux / macOS:
+```bash
 ./image-gen "path/to/your/image.jpg"
-
+```
 ## How it Works
 
 The program loads the target image provided via the command line.
