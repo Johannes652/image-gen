@@ -6,6 +6,9 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <future>
+#include <vector>
+#include <numeric>
 
 #define FRAMERATE 0
 
@@ -85,23 +88,46 @@ size_t ImageGen::CalculateSumOfColorDifferences(sf::Image& image) {
         std::cout << "Images not equal size!";
         return 0;
     }
-    size_t sumOfColorDifferences {0};
+
     size_t numberOfPixels = sourceImageSize_.x * sourceImageSize_.y;
-    size_t totalBytes = numberOfPixels * 4;
+    //size_t totalBytes = numberOfPixels * 4;
 
     const uint8_t* sourceImagePixels = sourceImage_.getPixelsPtr();
     const uint8_t* windowImagePixels = image.getPixelsPtr();
 
-    uint8_t redDifference{0}, greenDifference{0}, blueDifference{0};
+    size_t numThreads = std::thread::hardware_concurrency();
+    if (numThreads == 0) numThreads = 4; // Fallback
 
-    for (size_t i = 0; i < totalBytes; i += 4) {
-        redDifference =     static_cast<uint8_t>(std::abs(sourceImagePixels[i]   - windowImagePixels[i]));
-        greenDifference =   static_cast<uint8_t>(std::abs(sourceImagePixels[i+1] - windowImagePixels[i+1]));
-        blueDifference =    static_cast<uint8_t>(std::abs(sourceImagePixels[i+2] - windowImagePixels[i+2]));
+    size_t pixelsPerThread = numberOfPixels / numThreads;
+    std::vector<std::future<size_t>> futures;
 
-        sumOfColorDifferences += (redDifference + greenDifference + blueDifference) / 3;
+    auto processChunk = [&](size_t startPixel, size_t endPixel) -> size_t {
+        size_t localSum = 0;
+        for (size_t i = startPixel * 4; i < endPixel; i += 4) {
+            uint8_t rDiff = static_cast<uint8_t>(std::abs(sourceImagePixels[i] - windowImagePixels[i]));
+            uint8_t gDiff = static_cast<uint8_t>(std::abs(sourceImagePixels[i+1] - windowImagePixels[i+1]));
+            uint8_t bDiff = static_cast<uint8_t>(std::abs(sourceImagePixels[i+2] - windowImagePixels[i+2]));
+            localSum += (rDiff + gDiff + bDiff) / 3;
+        }
+        return localSum;
+    };
+    
+    // Dispatch threads
+    for (size_t t = 0; t < numThreads; ++t) {
+        size_t startPixel = t * pixelsPerThread;
+        // Ensure the last thread processes any remaining pixels
+        size_t endPixel = (t == numThreads - 1) ? numberOfPixels : startPixel + pixelsPerThread;
+        
+        futures.push_back(std::async(std::launch::async, processChunk, startPixel, endPixel));
     }
-    return sumOfColorDifferences;
+
+    // Wait for all threads to finish and accumulate the results
+    size_t totalSumOfDifferences = 0;
+    for (auto& f : futures) {
+        totalSumOfDifferences += f.get();
+    }
+
+    return totalSumOfDifferences;
 }
 
 void ImageGen::DrawRandomCircle(sf::RenderTexture& canvas) {
