@@ -29,6 +29,7 @@ void ImageGen::Loop() {
             
             if (event->is<sf::Event::Closed>()) {
                 window_.close();
+                return;
             }
             else if (const auto* keyEvent = event->getIf<sf::Event::KeyPressed>()) {
                 if (keyEvent->code == sf::Keyboard::Key::C && keyEvent->control) {
@@ -38,6 +39,7 @@ void ImageGen::Loop() {
                     SaveEvolvedImage(finalImage);
 
                     window_.close();
+                    return;
                 }
             }
         }

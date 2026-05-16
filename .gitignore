@@ -4,6 +4,9 @@ build/
 # Visual Studio Code local workspace settings
 .vscode/
 
+# Any outputs folder for images
+outputs/
+
 # General CMake Artifacts (catch-all if CMake is accidentally run in the root directory)
 CMakeCache.txt
 CMakeFiles/
