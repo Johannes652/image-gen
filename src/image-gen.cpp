@@ -2,6 +2,10 @@
 #include <optional>
 #include <iostream>
 #include <random>
+#include <filesystem>
+#include <chrono>
+#include <iomanip>
+#include <sstream>
 
 #define FRAMERATE 0
 
@@ -25,6 +29,16 @@ void ImageGen::Loop() {
             
             if (event->is<sf::Event::Closed>()) {
                 window_.close();
+            }
+            else if (const auto* keyEvent = event->getIf<sf::Event::KeyPressed>()) {
+                if (keyEvent->code == sf::Keyboard::Key::C && keyEvent->control) {
+                    std::cout << "Ctrl+C detected. Saving image...\n";
+                    sf::Image finalImage = canvas.getTexture().copyToImage();
+
+                    SaveEvolvedImage(finalImage);
+
+                    window_.close();
+                }
             }
         }
         // Convert window pixels to sf::image
@@ -125,4 +139,34 @@ std::string ImageGen::ColorToString(const sf::Color color) {
         << " G:" << static_cast<int>(color.g) 
         << " B:" << static_cast<int>(color.b);
     return str.str();
+}
+
+void ImageGen::SaveEvolvedImage(const sf::Image& image) const {
+    namespace fs = std::filesystem;
+
+    // Define the output directory relative to where the executable is run
+    fs::path outputDir = "outputs";
+
+    // Create the directory if it doesn't exist
+    if (!fs::exists(outputDir)) {
+        fs::create_directory(outputDir);
+    }
+
+    // Generate a timestamp string (e.g., "20260516_214002")
+    auto now = std::chrono::system_clock::now();
+    std::time_t time = std::chrono::system_clock::to_time_t(now);
+    
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&time), "%Y%m%d_%H%M%S");
+    
+    // Construct the final file path
+    std::string filename = "evolution_" + ss.str() + ".png";
+    fs::path filePath = outputDir / filename;
+
+    // Save the image
+    if (image.saveToFile(filePath.string())) {
+        std::cout << "Successfully saved image to: " << filePath.string() << "\n";
+    } else {
+        std::cerr << "Failed to save image.\n";
+    }
 }
