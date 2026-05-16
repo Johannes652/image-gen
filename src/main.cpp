@@ -1,18 +1,24 @@
 #include <iostream>
 #include "image-gen.h"
+#include <filesystem>
 
 int main(int argc, char* argv[]) {
     sf::Image image;
     std::string imageFilePath;
     std::string shapeType = "circle";
 
-    if (argc < 3) {
+    std::filesystem::path exePath = std::filesystem::weakly_canonical(std::filesystem::path(argv[0])).parent_path();
+
+    if (argc < 2) {
         // default behaviour
-        imageFilePath = "resources/source-images/dannebrog.jpg";
+        std::filesystem::path defaultImgPath = exePath / "../resources/source-images/dannebrog.jpg";
+        imageFilePath = defaultImgPath.string();
     }
     else {
+        if (argc > 2) {
+            shapeType = argv[2];
+        }
         imageFilePath = argv[1];
-        shapeType = argv[2];
     }
 
     if (!image.loadFromFile(imageFilePath)) {
