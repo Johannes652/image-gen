@@ -1,0 +1,29 @@
+# CMake Build Directory (contains environment-specific artifacts, binaries, and cache)
+build/
+
+# Visual Studio Code local workspace settings
+.vscode/
+
+# General CMake Artifacts (catch-all if CMake is accidentally run in the root directory)
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+_deps/
+CPackConfig.cmake
+CPackSourceConfig.cmake
+
+# Compiled Executables and Object Files (catch-all)
+*.exe
+*.out
+*.app
+*.o
+*.obj
+
+# OS Generated Files
+.DS_Store
+Thumbs.db
