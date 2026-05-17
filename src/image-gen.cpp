@@ -6,6 +6,7 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
+#include <algorithm>
 
 #define FRAMERATE 0
 
@@ -47,23 +48,24 @@ void ImageGen::Loop() {
         // Convert window pixels to sf::image
         sf::Image baseImage = canvas.getTexture().copyToImage();
 
-        // Calculate sum of differences of average colors
-        size_t oldSumOfColorDifferences = CalculateSumOfColorDifferences(baseImage);
-
+        std::pair<sf::Vector2u, sf::Vector2u> coords;
         // Place random shape
         if (shapeType_ == "rectangle" || shapeType_ == "rect") {
-            DrawRandomRect(canvas);
+            coords = DrawRandomRect(canvas);
         }
         else {
             // defaults to circle shapes
-            DrawRandomCircle(canvas);
+            coords = DrawRandomCircle(canvas);
         }
+
+        // Calculate sum of differences of average colors of baseImage
+        size_t oldSumOfColorDifferences = CalculateSumOfColorDifferences(baseImage, coords);
         
         canvas.display();
         
         // Calculate new sum of differences of average colors
         sf::Image mutatedImage = canvas.getTexture().copyToImage();
-        size_t newSumOfColorDifferences = CalculateSumOfColorDifferences(mutatedImage);
+        size_t newSumOfColorDifferences = CalculateSumOfColorDifferences(mutatedImage, coords);
 
         // Determine if new diff is better than old diff
         if (newSumOfColorDifferences >= oldSumOfColorDifferences) {
@@ -88,34 +90,49 @@ void ImageGen::Loop() {
     }
 }
 
-size_t ImageGen::CalculateSumOfColorDifferences(sf::Image& image) {
+size_t ImageGen::CalculateSumOfColorDifferences(sf::Image& image, std::pair<sf::Vector2u, sf::Vector2u>& coords) {
     if (sourceImage_.getSize() != image.getSize()) {
         std::cout << "Images not equal size!";
         return 0;
     }
+
+    auto startCoords = coords.first;
+    auto endCoords = coords.second;
+
     size_t sumOfColorDifferences {0};
-    size_t numberOfPixels = sourceImageSize_.x * sourceImageSize_.y;
-    size_t totalBytes = numberOfPixels * 4;
+    size_t numberOfPixels = (endCoords.x - startCoords.x) * (endCoords.y - startCoords.y);
 
     const uint8_t* sourceImagePixels = sourceImage_.getPixelsPtr();
     const uint8_t* windowImagePixels = image.getPixelsPtr();
 
+    size_t spliceWidthBytes = (endCoords.x - startCoords.x) * 4;
+    size_t imageWidth = sourceImageSize_.x;
+
     uint8_t redDifference{0}, greenDifference{0}, blueDifference{0};
 
-    for (size_t i = 0; i < totalBytes; i += 4) {
-        redDifference =     static_cast<uint8_t>(std::abs(sourceImagePixels[i]   - windowImagePixels[i]));
-        greenDifference =   static_cast<uint8_t>(std::abs(sourceImagePixels[i+1] - windowImagePixels[i+1]));
-        blueDifference =    static_cast<uint8_t>(std::abs(sourceImagePixels[i+2] - windowImagePixels[i+2]));
+    // Iterate row by row through the splice
+    for (size_t y = startCoords.y; y < endCoords.y; ++y) {
+        // Calculate the exact 1D byte index where this specific row starts in the image array
+        size_t rowStartIndex = (y * imageWidth + startCoords.x) * 4;
+        size_t rowEndIndex = rowStartIndex + spliceWidthBytes;
 
-        sumOfColorDifferences += (redDifference + greenDifference + blueDifference) / 3;
+        // Now iterate through the pixels of the row
+        for (size_t x = rowStartIndex; x < rowEndIndex; x += 4) {
+            redDifference =     static_cast<uint8_t>(std::abs(sourceImagePixels[x]   - windowImagePixels[x]));
+            greenDifference =   static_cast<uint8_t>(std::abs(sourceImagePixels[x+1] - windowImagePixels[x+1]));
+            blueDifference =    static_cast<uint8_t>(std::abs(sourceImagePixels[x+2] - windowImagePixels[x+2]));
+
+            sumOfColorDifferences += (redDifference + greenDifference + blueDifference);
+        }
     }
+
     return sumOfColorDifferences;
 }
 
-void ImageGen::DrawRandomCircle(sf::RenderTexture& canvas) {
+std::pair<sf::Vector2u, sf::Vector2u> ImageGen::DrawRandomCircle(sf::RenderTexture& canvas) {
     sf::CircleShape circle;
-    // 1 <= radius <= min(windowsize)
-    size_t maxRadius = std::min(windowResolution_.x, windowResolution_.y);
+    // 1 <= radius <= min(windowsize) / 4
+    size_t maxRadius = std::min(windowResolution_.x, windowResolution_.y) >> 2;
     static std::random_device rd;
     static std::mt19937 gen(rd());
     std::uniform_int_distribution<int> distrib(1, maxRadius);
@@ -124,9 +141,9 @@ void ImageGen::DrawRandomCircle(sf::RenderTexture& canvas) {
     circle.setRadius(radius);
 
     // -2*radius <= xpos <= (windowwidth + 2*radius)
-    // -2*radius <= ypos <= (windowheight + 2*radius)
     distrib = std::uniform_int_distribution<int>{-2*radius, static_cast<int>(windowResolution_.x) + 2*radius};
     float xpos = distrib(gen);
+    // -2*radius <= ypos <= (windowheight + 2*radius)
     distrib = std::uniform_int_distribution<int>{-2*radius, static_cast<int>(windowResolution_.y) + 2*radius};
     float ypos = distrib(gen);
     circle.setPosition({xpos, ypos});
@@ -141,27 +158,37 @@ void ImageGen::DrawRandomCircle(sf::RenderTexture& canvas) {
     });
 
     canvas.draw(circle);
+
+    sf::Vector2u pos1 {
+        static_cast<unsigned int>( std::clamp(static_cast<int>(xpos), 0, static_cast<int>(windowResolution_.x)) ), 
+        static_cast<unsigned int>( std::clamp(static_cast<int>(ypos), 0, static_cast<int>(windowResolution_.y)) )
+    };
+    sf::Vector2u pos2 {
+        static_cast<unsigned int>( std::clamp(static_cast<int>(xpos) + (radius * 2), 0, static_cast<int>(windowResolution_.x)) ), 
+        static_cast<unsigned int>( std::clamp(static_cast<int>(ypos) + (radius * 2), 0, static_cast<int>(windowResolution_.y)) )
+    };
+    return {pos1, pos2};
 }
 
-void ImageGen::DrawRandomRect(sf::RenderTexture& canvas) {
+std::pair<sf::Vector2u, sf::Vector2u> ImageGen::DrawRandomRect(sf::RenderTexture& canvas) {
     sf::RectangleShape rect;
-    // 1 <= xsize <= windowx
-    // 1 <= ysize <= windowy
+    // 1 <= xsize <= windowx / 4
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> distrib(1, static_cast<int>(windowResolution_.x));
-    float sizex = distrib(gen);
-    distrib = std::uniform_int_distribution<int>{1, static_cast<int>(windowResolution_.y)};
-    float sizey = distrib(gen);
-    rect.setSize({sizex,sizey});
+    std::uniform_int_distribution<int> distrib(1, static_cast<int>(windowResolution_.x >> 2));
+    float xsize = distrib(gen);
+    // 1 <= ysize <= windowy / 4
+    distrib = std::uniform_int_distribution<int>{1, static_cast<int>(windowResolution_.y >> 2)};
+    float ysize = distrib(gen);
+    rect.setSize({xsize,ysize});
 
-    // -sizex <= posx <= windowx
-    distrib = std::uniform_int_distribution<int>{static_cast<int>(-sizex), static_cast<int>(windowResolution_.x)};
-    float posx = distrib(gen);
-    // -sizey <= posy <= windowy
-    distrib = std::uniform_int_distribution<int>{static_cast<int>(-sizey), static_cast<int>(windowResolution_.y)};
-    float posy = distrib(gen);
-    rect.setPosition({posx,posy});
+    // -sizex <= xpos <= windowx
+    distrib = std::uniform_int_distribution<int>{static_cast<int>(-xsize), static_cast<int>(windowResolution_.x)};
+    float xpos = distrib(gen);
+    // -sizey <= ypos <= windowy
+    distrib = std::uniform_int_distribution<int>{static_cast<int>(-ysize), static_cast<int>(windowResolution_.y)};
+    float ypos = distrib(gen);
+    rect.setPosition({xpos,ypos});
 
     // 0 <= col <= 255
     distrib = std::uniform_int_distribution<int>{0, 255};
@@ -173,6 +200,16 @@ void ImageGen::DrawRandomRect(sf::RenderTexture& canvas) {
     });
 
     canvas.draw(rect);
+
+    sf::Vector2u pos1 {
+        static_cast<unsigned int>( std::clamp(static_cast<int>(xpos), 0, static_cast<int>(windowResolution_.x)) ), 
+        static_cast<unsigned int>( std::clamp(static_cast<int>(ypos), 0, static_cast<int>(windowResolution_.y)) )
+    };
+    sf::Vector2u pos2 {
+        static_cast<unsigned int>( std::clamp(static_cast<int>(xpos + xsize), 0, static_cast<int>(windowResolution_.x)) ), 
+        static_cast<unsigned int>( std::clamp(static_cast<int>(ypos + ysize), 0, static_cast<int>(windowResolution_.y)) )
+    };
+    return {pos1, pos2};
 }
 
 std::string ImageGen::ColorToString(const sf::Color color) {
