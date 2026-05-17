@@ -19,8 +19,8 @@ private:
     sf::Vector2u sourceImageSize_;
 
     std::string ColorToString(const sf::Color color);
-    size_t CalculateSumOfColorDifferences(sf::Image&);
-    void DrawRandomCircle(sf::RenderTexture&);
-    void DrawRandomRect(sf::RenderTexture&);
+    size_t CalculateSumOfColorDifferences(sf::Image&, std::pair<sf::Vector2u, sf::Vector2u>& coords);
+    std::pair<sf::Vector2u, sf::Vector2u> DrawRandomCircle(sf::RenderTexture&);
+    std::pair<sf::Vector2u, sf::Vector2u> DrawRandomRect(sf::RenderTexture&);
     void SaveEvolvedImage(const sf::Image& image) const;
 };
