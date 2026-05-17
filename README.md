@@ -26,7 +26,7 @@ This project is a C++ application that attempts to recreate a target image using
 
 The program runs from the command line and requires the file path of the target image to be passed as an argument.
 Navigate to your build directory where the executable was generated and run the program:
-Note: <shape-type> is "rectangle", "rect" or "circle". Defaults to "circle".
+Note: shape-type is rectangle, rect or circle. Defaults to "circle".
 ### Windows
 ```bash
 image-gen.exe "path/to/your/image.jpg" <shape-type>
