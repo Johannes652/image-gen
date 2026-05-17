@@ -1,4 +1,5 @@
 #include "image-gen.h"
+#include "icon-data.h"
 #include <optional>
 #include <iostream>
 #include <random>
@@ -18,15 +19,9 @@ ImageGen::ImageGen(const sf::Image& image, const std::string& shapeType) :
 {
     window_.create(sf::VideoMode(windowResolution_), "Image Gen", sf::Style::Titlebar | sf::Style::Close);
     window_.setFramerateLimit(FRAMERATE);
-}
-
-void ImageGen::SetWindowIcon(std::string filePath) {
-    auto image = sf::Image{};
-    if (!image.loadFromFile(filePath)) {
-        std::cout << "Could not set window icon!" << std::endl;
-    }
-    else {
-        window_.setIcon(image.getSize(), image.getPixelsPtr());
+    sf::Image icon;
+    if (icon.loadFromMemory(image_gen_png, image_gen_png_len)) {
+        window_.setIcon(icon.getSize(), icon.getPixelsPtr());
     }
 }
 
