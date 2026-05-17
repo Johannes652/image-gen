@@ -131,30 +131,35 @@ size_t ImageGen::CalculateSumOfColorDifferences(sf::Image& image, std::pair<sf::
 
 std::pair<sf::Vector2u, sf::Vector2u> ImageGen::DrawRandomCircle(sf::RenderTexture& canvas) {
     sf::CircleShape circle;
-    // 1 <= radius <= min(windowsize) / 4
-    size_t maxRadius = std::min(windowResolution_.x, windowResolution_.y) >> 2;
+
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> distrib(1, maxRadius);
 
-    int radius = distrib(gen);
+    // SIZE
+    // 1 <= radius <= min(windowsize) / 4
+    static int maxRadius = std::min(windowResolution_.x, windowResolution_.y) >> 2;
+    static std::uniform_int_distribution<int> sizeDistrib(1, maxRadius);
+    int radius = sizeDistrib(gen);
     circle.setRadius(radius);
 
+    // POSITION
     // -2*radius <= xpos <= (windowwidth + 2*radius)
-    distrib = std::uniform_int_distribution<int>{-2*radius, static_cast<int>(windowResolution_.x) + 2*radius};
-    float xpos = distrib(gen);
+    int minPos = -2*radius;
+    int maxXPos = windowResolution_.x + 2*radius;
+    float xpos = std::uniform_int_distribution<int>{minPos, maxXPos}(gen);
     // -2*radius <= ypos <= (windowheight + 2*radius)
-    distrib = std::uniform_int_distribution<int>{-2*radius, static_cast<int>(windowResolution_.y) + 2*radius};
-    float ypos = distrib(gen);
+    int maxYPos = windowResolution_.y + 2*radius;
+    float ypos = std::uniform_int_distribution<int>{minPos, maxYPos}(gen);
     circle.setPosition({xpos, ypos});
 
+    // COLOR
     // 0 <= col <= 255
-    distrib = std::uniform_int_distribution<int>{0, 255};
+    static std::uniform_int_distribution<int> colorDistrib(0, 255);
     circle.setFillColor({
-        static_cast<uint8_t>(distrib(gen)),
-        static_cast<uint8_t>(distrib(gen)),
-        static_cast<uint8_t>(distrib(gen)),
-        static_cast<uint8_t>(distrib(gen))
+        static_cast<uint8_t>(colorDistrib(gen)),
+        static_cast<uint8_t>(colorDistrib(gen)),
+        static_cast<uint8_t>(colorDistrib(gen)),
+        static_cast<uint8_t>(colorDistrib(gen))
     });
 
     canvas.draw(circle);
@@ -172,31 +177,38 @@ std::pair<sf::Vector2u, sf::Vector2u> ImageGen::DrawRandomCircle(sf::RenderTextu
 
 std::pair<sf::Vector2u, sf::Vector2u> ImageGen::DrawRandomRect(sf::RenderTexture& canvas) {
     sf::RectangleShape rect;
-    // 1 <= xsize <= windowx / 4
+
     static std::random_device rd;
     static std::mt19937 gen(rd());
-    std::uniform_int_distribution<int> distrib(1, static_cast<int>(windowResolution_.x >> 2));
-    float xsize = distrib(gen);
+
+    // SIZE
+    // 1 <= xsize <= windowx / 4
+    static int maxXSize = windowResolution_.x >> 2;
+    float xsize = std::uniform_int_distribution<int>{1, maxXSize}(gen);
     // 1 <= ysize <= windowy / 4
-    distrib = std::uniform_int_distribution<int>{1, static_cast<int>(windowResolution_.y >> 2)};
-    float ysize = distrib(gen);
+    static int maxYSize = windowResolution_.x >> 2;
+    float ysize = std::uniform_int_distribution<int>{1, maxYSize}(gen);
     rect.setSize({xsize,ysize});
 
+    // POSITION
     // -sizex <= xpos <= windowx
-    distrib = std::uniform_int_distribution<int>{static_cast<int>(-xsize), static_cast<int>(windowResolution_.x)};
-    float xpos = distrib(gen);
+    int minXPos = -xsize;
+    static int maxXPos = windowResolution_.x;
+    float xpos = std::uniform_int_distribution<int>{minXPos, maxXPos}(gen);
     // -sizey <= ypos <= windowy
-    distrib = std::uniform_int_distribution<int>{static_cast<int>(-ysize), static_cast<int>(windowResolution_.y)};
-    float ypos = distrib(gen);
+    int minYPos = -ysize;
+    static int maxYPos = windowResolution_.y;
+    float ypos = std::uniform_int_distribution<int>{minYPos, maxYPos}(gen);
     rect.setPosition({xpos,ypos});
 
+    // COLOR
     // 0 <= col <= 255
-    distrib = std::uniform_int_distribution<int>{0, 255};
+    static std::uniform_int_distribution<int> colorDistrib(0, 255);
     rect.setFillColor({
-        static_cast<uint8_t>(distrib(gen)),
-        static_cast<uint8_t>(distrib(gen)),
-        static_cast<uint8_t>(distrib(gen)),
-        static_cast<uint8_t>(distrib(gen))
+        static_cast<uint8_t>(colorDistrib(gen)),
+        static_cast<uint8_t>(colorDistrib(gen)),
+        static_cast<uint8_t>(colorDistrib(gen)),
+        static_cast<uint8_t>(colorDistrib(gen))
     });
 
     canvas.draw(rect);
