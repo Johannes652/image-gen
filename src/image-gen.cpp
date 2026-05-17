@@ -20,6 +20,16 @@ ImageGen::ImageGen(const sf::Image& image, const std::string& shapeType) :
     window_.setFramerateLimit(FRAMERATE);
 }
 
+void ImageGen::SetWindowIcon(std::string filePath) {
+    auto image = sf::Image{};
+    if (!image.loadFromFile(filePath)) {
+        std::cout << "Could not set window icon!" << std::endl;
+    }
+    else {
+        window_.setIcon(image.getSize(), image.getPixelsPtr());
+    }
+}
+
 void ImageGen::Loop() {
     sf::RenderTexture canvas(windowResolution_);
     canvas.clear(sf::Color::Black);

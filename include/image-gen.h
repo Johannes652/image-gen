@@ -7,6 +7,7 @@
 class ImageGen {
 public:
     ImageGen(const sf::Image& image, const std::string& shapeType);
+    void SetWindowIcon(std::string filePath);
     void Loop();
     
 private:

@@ -28,6 +28,8 @@ int main(int argc, char* argv[]) {
     else std::cout << "Successfully loaded image!\n";
     
     ImageGen imageGen(image, shapeType);
+    std::filesystem::path windowIconPath = exePath / "../resources/icon/icon.png";
+    imageGen.SetWindowIcon(windowIconPath.string());
     imageGen.Loop();
     return 0;
 }   
