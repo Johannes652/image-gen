@@ -26,13 +26,14 @@ This project is a C++ application that attempts to recreate a target image using
 
 The program runs from the command line and requires the file path of the target image to be passed as an argument.
 Navigate to your build directory where the executable was generated and run the program:
+Note: <shape-type> is "rectangle", "rect" or "circle". Defaults to "circle".
 ### Windows
 ```bash
-image-gen.exe "path/to/your/image.jpg" shape-type
+image-gen.exe "path/to/your/image.jpg" <shape-type>
 ```
 ### Linux / macOS:
 ```bash
-./image-gen "path/to/your/image.jpg" shape-type
+./image-gen "path/to/your/image.jpg" <shape-type>
 ```
 ## How it Works
 
@@ -47,3 +48,5 @@ It compares the newly generated canvas against the target image by calculating t
 If the mutation (the new circle) results in a closer match to the target image, the mutation is kept. If it is worse, the mutation is rejected and the canvas reverts to the previous state.
 
 The window continuously updates to display the current best approximation.
+
+Press ctrl + C in the program window to save current iteration to image and exit the program.
